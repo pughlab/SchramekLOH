@@ -1,0 +1,8 @@
+*tgz
+*tar.gz
+*Rcheck/
+**/.Rproj.user/
+*/**/data/gaf.RData
+*/**/data/birdseed.RData
+*/**/data/geneExpr.RData
+*/**/snp6.RData

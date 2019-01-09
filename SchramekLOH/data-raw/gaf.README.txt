@@ -1,0 +1,3 @@
+The link https://tcga-data.nci.nih.gov/tcgafiles/ftp_auth/distro_ftpusers/anonymous/other/GAF/GAF_bundle/outputs/TCGA.Sept2010.09202010.gaf for the gaf file is broken
+
+Another gaf file (TCGA.hg19.June2011.gaf) of similar time was obtained from Synapse at https://www.synapse.org/#!Synapse:syn1356421.1
