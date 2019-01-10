@@ -103,3 +103,20 @@ compTwoGenes <- function(gene.x, gene.y, col.df, cex.type='xy', plot.legend=TRUE
                               cex=cex.xy))
   range.stdres.xyz
 }
+
+#' plotSegSizes
+#'
+#' @return
+#' @export
+#'
+#' @examples
+plotSegSizes <- function(){
+  range.stdres.xyz$width.x <- with(range.stdres.xyz, seg.end.x - seg.start.x)
+  range.stdres.xyz$width.y <- with(range.stdres.xyz, seg.end.y - seg.start.y)
+  mb <- 1000000
+  with(range.stdres.xyz[which(range.stdres.xyz$UID == 'HETLOSS_HETLOSS'),],
+       plot((width.x / mb), (width.y / mb), pch=16,
+            cex=rescale(abs(seg.x * seg.y), to=c(1,5)), col=alpha(col, 0.8),
+            xlab=paste0(gene.x, " HetLoss Seg size"), ylab=paste0(gene.y, " HetLoss Seg size"),
+            sub="Circle size proportional to purity"))
+}

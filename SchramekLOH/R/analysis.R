@@ -92,7 +92,9 @@ aggregateStdRes <- function(sample.id, range, gene, sample.stdres, all.stdres){
   rge.stdres <- seg.df[c((bin.idx-range):(bin.idx+range)),]$stdres
   c("mean"=mean(rge.stdres, na.rm=TRUE),
     "sd"=sd(rge.stdres, na.rm=TRUE),
-    "seg"=as.numeric(gene.info[,'seg.mean']))
+    "seg"=as.numeric(gene.info[,'seg.mean']),
+    "seg.start"=as.numeric(gene.info[,'seg.start']),
+    "seg.end"=as.numeric(gene.info[,'seg.end']))
 }
 
 #' getGeneExp
