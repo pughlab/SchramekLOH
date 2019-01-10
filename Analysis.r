@@ -7,8 +7,8 @@ library(gplots)
 library(IdeoViz)
 library(reshape)
 
-detach("package:SchramekLOH", unload=TRUE)
-require(SchramekLOH)
+#detach("package:SchramekLOH", unload=TRUE)
+#library(SchramekLOH)
 
 data("birdseed")  # df.bs, mapping.cov, mapping, ref.probe.ord
 data("expr.mapping")  # expr.mapping
@@ -52,6 +52,7 @@ seg.chr <- lapply(seg.ids, function(seg.i){
 })
 
 head(seg.chr[['BALMS_p_TCGAb54and67_SNP_N_GenomeWideSNP_6_A03_730402']][['chr3']])
+head(seg.chr[['TCGA-4P-AA8J-01']][['chr3']])
 
 #### Map Probesets to Genomic Loci ####
 if(exists("ref.probe.ord")){
@@ -100,6 +101,12 @@ if(exists("df.ex")){
     gaf.chr <- gaf.chr[chrom.ord]
     z.chr <- z.chr[chrom.ord]
 }
+
+print(paste0("Number of Affy6 samples: ", length(names(seg.ids))))
+print(paste0("Number of Affy6 samples: ", length(names(z.ex))))
+print(paste0("Number of Affy6 samples: ", length(names(seg.ids))))
+
+length(intersect(names(seg.ids), gsub("\\.", "-", names(z.ex))))
 
 library(gplots)
 library(RColorBrewer)
@@ -229,35 +236,20 @@ lapply(ex.by.mut, head, 3)
 ord <- order(ex.by.mut[['mut']][,3], decreasing=TRUE)
 ex.by.mut[['mut']][ord,]
 
-#gene <- 'ADAM10'
 gene <- 'AJUBA'
 mut <- paste0(gene, "_CNA")
 rge <- 5
+visOneGene(gene, rge, mut)
 
-range.stdres <- sapply(names(sample.stdres), aggregateStdRes,
-                       range=rge, gene=gene, sample.stdres=sample.stdres, all.stdres=all.stdres)
-range.stdres <- data.frame(t(range.stdres), stringsAsFactors=FALSE)
+gene <- 'ADAM10'
+mut <- paste0(gene, "_CNA")
+rge <- 5
+visOneGene(gene, rge, mut)
 
-hetloss.idx <- which(mut.attr[,mut]  == 'HETLOSS')
-homloss.idx <- which(mut.attr[,mut]  == 'HOMDEL')
-mut.ids <- mut.attr[c(hetloss.idx, homloss.idx), 'TRACK_ID', drop=TRUE]
-mapped.ids <- mapIds(mut.ids, mapping.cov, in.type='tcga', out.type='affy')
-
-range.stdres$HETLOSS <- FALSE
-range.stdres[which(rownames(range.stdres) %in% mapped.ids),]$HETLOSS <- TRUE
-
-head(range.stdres)
-
-with(range.stdres, plot(mean~seg, cex=sd, xlim=c(-1, 0.5),
-                        col=alpha('grey', 1-rescale(sd, to=c(0,1))), 
-                        pch=16, ylab="StdRes", xlab="Seg"))
-axis(side=1, at = seq(-5, 4, by=0.1), 
-     labels = rep("", length(seq(-5, 4, by=0.1))), tick = TRUE)
-
-with(range.stdres[which(range.stdres$HETLOSS),], 
-     points(mean~seg, cex=sd, 
-          col=alpha('red', 1-rescale(sd, to=c(0,1))), 
-          pch=16))
+gene <- 'NOTCH1'
+mut <- paste0(gene, "_CNA")
+rge <- 5
+visOneGene(gene, rge, mut)
 
 # Sample with a Homozygous Deletion
 print("Homozygous Deletion case")
@@ -277,10 +269,6 @@ print(paste(c(gsub("01[AB]-.*", "01", id.x),
 mut.attr[mut.attr$TRACK_ID == gsub("01[AB]-.*", "01", id.x), , drop=FALSE]
 range.stdres[mapIds(id.x , mapping.cov, in.type="tcga", out.type="affy"),]
 
-gene.y <- 'ADAM10'
-gene.x <- 'AJUBA'
-rge <- 5
-
 col.df <- data.frame("UID"=c("HOMDEL_HETLOSS", "HETLOSS_HOMDEL", "HETLOSS_HETLOSS", "HETLOSS-SNV_HETLOSS", "HETLOSS-SNV_SNV",
                              "HOMDEL_NA", "HOMDEL-SNV_NA", "HETLOSS_NA", "HETLOSS-SNV_NA", "SNV_NA", 
                              "NA_HOMDEL", "NA_HOMDEL-SNV", "NA_HETLOSS", "NA_SNV", "NA_NA"),
@@ -289,8 +277,13 @@ col.df <- data.frame("UID"=c("HOMDEL_HETLOSS", "HETLOSS_HOMDEL", "HETLOSS_HETLOS
                             "#a50f15", "#a50f15", "#a50f15", "#a50f15", "#fb6a4a",
                             "#08519c", "#08519c", "#08519c", "#6baed6", "grey"))
 
-range.stdres.xyz <- compTwoGenes(gene.x, gene.y, col.df)
-range.stdres.xyz[which(range.stdres.xyz$UID == 'HETLOSS_HETLOSS'),]
+gene.y <- 'ADAM10'
+gene.x <- 'AJUBA'
+rge <- 5
+
+range.stdres.xyz <- compTwoGenes(gene.x, gene.y, col.df, cex.type='xy')
+head(range.stdres.xyz[which(range.stdres.xyz$UID == 'HETLOSS_HETLOSS'),], 3)
+plotSegSizes()
 
 range.stdres.xyz <- compTwoGenes('ADAM10', 'NOTCH1', col.df, cex.type = 'xy', plot.legend=FALSE)
 head(range.stdres.xyz[which(range.stdres.xyz$seg.y < -0.3),], 10)
