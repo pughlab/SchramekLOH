@@ -4,7 +4,7 @@
 \alias{getGeneExp}
 \title{getGeneExp}
 \usage{
-getGeneExp(gene.id)
+getGeneExp(gene.id, z.ex = z.ex)
 }
 \arguments{
 \item{gene.id}{i.e. AJUBA or JUB}

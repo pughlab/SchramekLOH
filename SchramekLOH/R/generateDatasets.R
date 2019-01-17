@@ -51,6 +51,22 @@ generateDatasets <- function(git="~/git/SchramekLOH/SchramekLOH/data"){
                         header=TRUE, stringsAsFactors = FALSE,
                         check.names = FALSE)
   save(affyseg, file=file.path(git, "Affyseg.Rdata"))
+
+
+  ## Reading in the ABSOLUTE SegMAF files
+  segmafdir <- '/Users/rquevedo/Onedrive/PughLab/Schramek_notch/IGV_segs/TCGA_hnsc_vcf2'
+
+  segmaf <- read.table(file.path(segmafdir, "HNSC.allABSOLUTE.seg"),
+                       header=TRUE, stringsAsFactors = FALSE, sep="\t",
+                       check.names=FALSE)
+  save(segmaf, file=file.path(git, "segmaf.rda"))
+
+  ## Load in the purity files from ABSOLUTE
+  purity <- read.table(file.path(segmafdir, "HNSC.allABSOLUTE.purity.txt"),
+                       header=TRUE, stringsAsFactors = FALSE,
+                       check.names=FALSE, sep="\t")
+
+  save(purity, file=file.path(git, "purity.rda"))
   NULL
 }
 

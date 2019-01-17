@@ -4,7 +4,8 @@
 \alias{visOneGene}
 \title{visOneGene}
 \usage{
-visOneGene(gene, rge, mut)
+visOneGene(gene, rge, mut, use.absolute = FALSE, purity = NULL,
+  plot.cr = FALSE, use.seg = FALSE)
 }
 \arguments{
 \item{mut}{}

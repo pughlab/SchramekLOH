@@ -57,7 +57,8 @@ cleanSeg <- function(seg.x, min.size=50000,
 #' @export
 #'
 #' @examples mapIds(id, mapping.cov, in.type='tcga', out.type='affy')
-mapIds <- function(id, mapping, in.type='tcga', out.type='affy'){
+mapIds <- function(id, mapping, in.type='tcga',
+                   out.type='affy', clean=TRUE){
   in.idx <- switch(in.type,
                    tcga=2,
                    affy=3)
@@ -65,8 +66,12 @@ mapIds <- function(id, mapping, in.type='tcga', out.type='affy'){
                     tcga=2,
                     affy=3)
 
-  idx <- sapply(id, function(i) grep(i, mapping[,in.idx]))
-  mapping[idx, out.idx]
+  idx <- sapply(id, function(i) grep(i, mapping[,in.idx])[1])
+  if(out.type == 'tcga' & clean){
+    gsub("01[AB]-.*", "01", mapping[idx, out.idx])
+  } else {
+    mapping[idx, out.idx]
+  }
 }
 
 
@@ -82,17 +87,27 @@ mapIds <- function(id, mapping, in.type='tcga', out.type='affy'){
 #' @export
 #'
 #' @examples
-aggregateStdRes <- function(sample.id, range, gene, sample.stdres, all.stdres){
+aggregateStdRes <- function(sample.id, range, gene, sample.stdres,
+                            all.stdres, use.absolute=FALSE, use.seg=TRUE){
   gene.df <- sample.stdres[[sample.id]]
   seg.df <- all.stdres[[sample.id]]
 
   gene.info <- gene.df[match(gene, gene.df$gene),]
-  bin.idx <- intersect(which(seg.df$chrom %in% gene.info$chr),
-                       which(seg.df$start %in% gene.info$bin.start))
-  rge.stdres <- seg.df[c((bin.idx-range):(bin.idx+range)),]$stdres
+  if(use.seg){
+    seg.range <- intersect(which(seg.df$chrom %in% gene.info$chr),
+                           which(seg.df$start > as.numeric(gene.info$seg.start) &
+                                   seg.df$end < as.numeric(gene.info$seg.end)))
+  } else {
+    bin.idx <- intersect(which(seg.df$chrom %in% gene.info$chr),
+                         which(seg.df$start %in% gene.info$bin.start))
+    seg.range <- c((bin.idx-range):(bin.idx+range))
+  }
+  rge.stdres <- seg.df[seg.range,]$stdres
+
   c("mean"=mean(rge.stdres, na.rm=TRUE),
     "sd"=sd(rge.stdres, na.rm=TRUE),
     "seg"=as.numeric(gene.info[,'seg.mean']),
+    "copy_ratio"=if(use.absolute) as.numeric(gene.info[,'copy.ratio']) else 0,
     "seg.start"=as.numeric(gene.info[,'seg.start']),
     "seg.end"=as.numeric(gene.info[,'seg.end']))
 }
@@ -105,7 +120,7 @@ aggregateStdRes <- function(sample.id, range, gene, sample.stdres, all.stdres){
 #' @export
 #'
 #' @examples
-getGeneExp <- function(gene.id){
+getGeneExp <- function(gene.id, z.ex=z.ex){
   gene.ex <- data.frame(t(z.ex[grep(paste0("^", gene.id), rownames(z.ex)), ,drop=FALSE]),
                         stringsAsFactors=FALSE)
   gene.ex$TRACK_ID <- gsub("\\.", "-", rownames(gene.ex))
@@ -139,6 +154,16 @@ getSegIQR <- function(segdf, lo.q=0.25, hi.q=0.75){
 #'
 #' @examples
 parseIdsByMutation <- function(gene, gene.ex, seg.ids=seg.ids, lo.q=0.1, hi.q=0.9){
+  .getAltType <- function(x){
+    alt.x <- rep("NA", length(x))
+    non.idx <- unique(sort(unlist(sapply(c("fs", "del", "\\*", "splice"), grep, x=x))))
+    mis.idx <- grep("^[A-Z][0-9]+[A-Z]$", x=x)
+
+    alt.x[non.idx] <- 'Nonsense'
+    alt.x[mis.idx] <- 'Missense'
+    alt.x
+  }
+
   ## Get a list of all the mutation subtype (e.g. CNA, MUT, FUSION)
   gene.mut <- colnames(mut.attr)[grep(gene, colnames(mut.attr))]
 
@@ -155,22 +180,26 @@ parseIdsByMutation <- function(gene, gene.ex, seg.ids=seg.ids, lo.q=0.1, hi.q=0.
   no_alt.samples <- lapply(gene.mut, function(m) mut.attr[which(mut.attr[,m] == 'no_alteration'), 'TRACK_ID'])
   no_alt.samples <- Reduce(function(x,y) intersect(x,y), no_alt.samples)
   no_alt.samples <- data.frame("TRACK_ID"=no_alt.samples, "Alt"="no_alteration")
+  no_alt.samples$Alt.type <- .getAltType(no_alt.samples[,2])
   no_alt.samples <- merge(no_alt.samples, gene.ex, by='TRACK_ID', all.x=TRUE)
   no_alt.samples <- merge(no_alt.samples, seg.iqr, by='TRACK_ID', all.x=TRUE)
 
   # Samples with specific types of alterations
   mut.samples <- mut.attr[which(mut.attr[, paste0(gene, "_MUT")] != 'no_alteration'),
                           c('TRACK_ID',paste0(gene, "_MUT"))]
+  mut.samples$Alt.type <- .getAltType(mut.samples[,2])
   mut.samples <- merge(mut.samples, gene.ex, by='TRACK_ID', all.x=TRUE)
   mut.samples <- merge(mut.samples, seg.iqr, by='TRACK_ID', all.x=TRUE)
 
   cna.samples <- mut.attr[which(mut.attr[, paste0(gene, "_CNA")] != 'no_alteration'),
                           c('TRACK_ID', paste0(gene, "_CNA"))]
+  cna.samples$Alt.type <- .getAltType(cna.samples[,2])
   cna.samples <- merge(cna.samples, gene.ex, by='TRACK_ID', all.x=TRUE)
   cna.samples <- merge(cna.samples, seg.iqr, by='TRACK_ID', all.x=TRUE)
 
   fusion.samples <- mut.attr[which(mut.attr[, paste0(gene, "_FUSION")] != 'no_alteration'),
                              c('TRACK_ID', paste0(gene, "_FUSION"))]
+  fusion.samples$Alt.type <- .getAltType(fusion.samples[,2])
   fusion.samples <- merge(fusion.samples, gene.ex, by='TRACK_ID', all.x=TRUE)
   fusion.samples <- merge(fusion.samples, seg.iqr, by='TRACK_ID', all.x=TRUE)
 

@@ -4,8 +4,8 @@
 \alias{compTwoGenes}
 \title{compTwoGenes}
 \usage{
-compTwoGenes(gene.x, gene.y, col.df, cex.type = "xy",
-  plot.legend = TRUE)
+compTwoGenes(gene.x, gene.y, col.df, cex.type = "xy", use.seg = FALSE,
+  plot.legend = TRUE, use.absolute = FALSE)
 }
 \arguments{
 \item{cex.type}{}

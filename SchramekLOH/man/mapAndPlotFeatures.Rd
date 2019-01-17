@@ -5,7 +5,7 @@
 \title{mapAndPlotFeatures}
 \usage{
 mapAndPlotFeatures(id, mapping.cov, use.affy, plotsdir, snp6.chr, seg.chr,
-  bs.chr, z.chr, r, p, cn, gen.plot = TRUE)
+  bs.chr, z.chr, r, p, cn, gen.plot = TRUE, use.absolute = FALSE)
 }
 \arguments{
 \item{gen.plot}{}

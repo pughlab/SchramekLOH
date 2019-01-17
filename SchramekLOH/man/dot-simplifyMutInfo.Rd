@@ -4,7 +4,7 @@
 \alias{.simplifyMutInfo}
 \title{.simplifyMutInfo}
 \usage{
-.simplifyMutInfo(mut.attr, mut.x, mut.y)
+.simplifyMutInfo(mut.attr, mut.x, mut.y, use.absolute = FALSE)
 }
 \arguments{
 \item{mut.y}{}

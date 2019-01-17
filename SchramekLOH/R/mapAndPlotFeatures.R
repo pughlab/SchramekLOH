@@ -37,6 +37,8 @@
                           "seg.start"=if(length(red.ov.idx) == 0) 0 else start(gr.seg.reduce[red.ov.idx]),
                           "seg.end"=if(length(red.ov.idx) == 0) 1 else end(gr.seg.reduce[red.ov.idx]),
                           "seg.mean"=if(length(seg.ov.idx) == 0) 0 else gr.seg[seg.ov.idx]$seg.mean,
+                          "copy.ratio"=if(length(seg.ov.idx) == 0 |
+                                          !use.absolute) 0 else gr.seg[seg.ov.idx]$copy_ratio,
                           "stdres"=if(length(ov.idx) == 0) 0 else stdres[ov.idx]),
        "stdres"=SchramekLOH:::.getStdResDf(chr, bin.left, bin.right,
                                            stdres))
@@ -144,7 +146,7 @@
 #' @examples
 mapAndPlotFeatures <- function(id, mapping.cov, use.affy, plotsdir,
                                snp6.chr, seg.chr, bs.chr, z.chr,
-                               r, p, cn, gen.plot=TRUE){
+                               r, p, cn, gen.plot=TRUE, use.absolute=FALSE){
   ids <- SchramekLOH:::.mapId(id, mapping.cov, use.affy=use.affy)
 
   if(gen.plot){

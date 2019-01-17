@@ -4,7 +4,8 @@
 \alias{mapIds}
 \title{mapIds}
 \usage{
-mapIds(id, mapping, in.type = "tcga", out.type = "affy")
+mapIds(id, mapping, in.type = "tcga", out.type = "affy",
+  clean = TRUE)
 }
 \arguments{
 \item{id}{input ID (e.g. TCGA-CN-6011-01)}

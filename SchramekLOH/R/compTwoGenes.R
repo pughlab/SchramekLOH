@@ -21,13 +21,28 @@
 #' @return
 #'
 #' @examples
-.simplifyMutInfo <- function(mut.attr, mut.x, mut.y){
+.simplifyMutInfo <- function(mut.attr, mut.x, mut.y, use.absolute=FALSE){
   mut.tmp <- mut.attr[,c(mut.x, mut.y)]
   mut.tmp[mut.tmp == 'no_alteration'] <- 'NA'
   mut.tmp <- as.matrix(mut.tmp)
   mut.tmp[!mut.tmp %in% c('HETLOSS', 'HOMDEL', 'NA', 'GAIN')] <- 'SNV'
   mut.tmp <- data.frame(mut.tmp, stringsAsFactors = FALSE)
   mut.tmp$TCGA_ID <- mut.attr$TRACK_ID
+
+  if(use.absolute){
+    .replaceHetLoss <- function(seg='seg.x', mut){
+      gene.hetloss <- range.stdres.xy$TRACK_ID[which(range.stdres.xy[,seg] < 0)]
+      gene.hetloss <- gsub("01[AB]-.*", "01", mapIds(gene.hetloss, mapping.cov,
+                                                      in.type='affy', out.type='tcga'))
+      mut.tmp[,mut[grep("CNA", mut)]] <- 'NA'
+      mut.tmp[match(gene.hetloss, mut.tmp$TCGA_ID),
+              mut[grep("CNA", mut)]] <- 'HETLOSS'
+      mut.tmp
+    }
+    mut.tmp <- .replaceHetLoss(seg='seg.x', mut=mut.x)
+    mut.tmp <- .replaceHetLoss(seg='seg.y', mut=mut.y)
+  }
+
   mut.tmp
 }
 
@@ -42,18 +57,24 @@
 #' @export
 #'
 #' @examples
-compTwoGenes <- function(gene.x, gene.y, col.df, cex.type='xy', plot.legend=TRUE){
+compTwoGenes <- function(gene.x, gene.y, col.df, cex.type='xy',
+                         use.seg=FALSE, plot.legend=TRUE,
+                         use.absolute=FALSE){
   ## Obtain the Seg + LOH info of both Gene X and Gene Y
   # Gene.x: AJUBA
   range.stdres.x <- sapply(names(sample.stdres), aggregateStdRes,
-                           range=rge, gene=gene.x, sample.stdres=sample.stdres, all.stdres=all.stdres)
+                           range=rge, gene=gene.x, sample.stdres=sample.stdres,
+                           all.stdres=all.stdres, use.absolute=use.absolute,
+                           use.seg=use.seg)
   range.stdres.x <- data.frame(t(range.stdres.x), stringsAsFactors=FALSE)
   range.stdres.x$unity <- apply(range.stdres.x, 1, function(x) mean(c(x['mean'], x['seg'])))
   range.stdres.x$TRACK_ID <- rownames(range.stdres.x)
 
   # Gene.y: ADAM10
   range.stdres.y <- sapply(names(sample.stdres), aggregateStdRes,
-                           range=rge, gene=gene.y, sample.stdres=sample.stdres, all.stdres=all.stdres)
+                           range=rge, gene=gene.y, sample.stdres=sample.stdres,
+                           all.stdres=all.stdres, use.absolute=use.absolute,
+                           use.seg=use.seg)
   range.stdres.y <- data.frame(t(range.stdres.y), stringsAsFactors=FALSE)
   range.stdres.y$unity <- apply(range.stdres.y, 1, function(x) mean(c(x['mean'], x['seg'])))
   range.stdres.y$TRACK_ID <- rownames(range.stdres.y)
@@ -66,7 +87,7 @@ compTwoGenes <- function(gene.x, gene.y, col.df, cex.type='xy', plot.legend=TRUE
   mut.y <- colnames(mut.attr)[grep(gene.y, colnames(mut.attr))]
 
   # Format the two gene mutations into one dataframe and simplify
-  mut.tmp <- .simplifyMutInfo(mut.attr, mut.x, mut.y)
+  mut.tmp <- .simplifyMutInfo(mut.attr, mut.x, mut.y, use.absolute=use.absolute)
   x.ids <- apply(mut.tmp, 1, .reduceId, mut.i=mut.x)
   y.ids <- apply(mut.tmp, 1, .reduceId, mut.i=mut.y)
   mut.tmp$UID <- paste(x.ids, y.ids, sep="_")
@@ -93,12 +114,18 @@ compTwoGenes <- function(gene.x, gene.y, col.df, cex.type='xy', plot.legend=TRUE
     }
   }
   #SEG-LOH Plot
+  if(use.absolute) {
+    range.stdres.xyz$seg.x <- range.stdres.xyz$copy_ratio.x
+    range.stdres.xyz$seg.y <- range.stdres.xyz$copy_ratio.y
+  }
+
   cex.xy <- switch(cex.type,
                    "xy"=with(range.stdres.xyz, rescale(abs(mean.x * mean.y), to=c(1,4))),
                    "x"=with(range.stdres.xyz, rescale(abs(mean.x), to=c(1,4))),
                    "y"=with(range.stdres.xyz, rescale(abs(mean.y), to=c(1,4))))
   with(range.stdres.xyz, plot(seg.x, seg.y, col=alpha(col, 0.7), pch=16,
-                              xlim=c(-1,0.5), ylim=c(-1, 0.5),
+                              xlim=if(use.absolute) c(0,1) else c(-1,0.5),
+                              ylim=if(use.absolute) c(0,1) else c(-1, 0.5),
                               xlab=paste(gene.x, "seg"), ylab=paste(gene.y, "seg"),
                               cex=cex.xy))
   range.stdres.xyz

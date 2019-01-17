@@ -4,7 +4,8 @@
 \alias{aggregateStdRes}
 \title{aggregateStdRes}
 \usage{
-aggregateStdRes(sample.id, range, gene, sample.stdres, all.stdres)
+aggregateStdRes(sample.id, range, gene, sample.stdres, all.stdres,
+  use.absolute = FALSE, use.seg = TRUE)
 }
 \arguments{
 \item{all.stdres}{}
