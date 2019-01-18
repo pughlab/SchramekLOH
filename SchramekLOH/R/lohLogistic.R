@@ -94,7 +94,7 @@ plotLohProb <- function(goi=NULL, soi=NULL, i=NULL, j=NULL, diff=FALSE,
 
     rle.x <- rle(as.character(gaf.ord$chr))
     na.chr <- which(!is.na(rle.x$values))
-    chr.xpos <- c(1, cumsum(rle.x$length[na.chr]))
+    chr.xpos <- c(1, cumsum(rle.x$length))
   }
 
 
