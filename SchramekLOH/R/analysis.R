@@ -209,3 +209,33 @@ parseIdsByMutation <- function(gene, gene.ex, seg.ids=seg.ids, lo.q=0.1, hi.q=0.
                     "fusion"=fusion.samples)
   ex.by.mut
 }
+
+
+#' .mutBoxplot
+#'
+#' @param ex.by.mut
+#' @param add.purity
+#'
+#' @return
+#' @export
+#'
+#' @examples
+.mutBoxplot <- function(ex.by.mut, add.purity=TRUE){
+  cols <- list("NA"='grey',
+               'Nonsense'='red',
+               'Missense'='blue')
+
+  ex.id <- colnames(ex.by.mut[[1]])[4]
+
+  boxplot(lapply(ex.by.mut, function(x) x[,ex.id ]),
+          ylab="Gene z-score", ylim=c(-2, 3), outline=FALSE)
+
+  x <- sapply(seq_along(ex.by.mut), function(x){
+    ex <- ex.by.mut[[x]]
+    points(x=rep(x, nrow(ex)), y=ex[, ex.id],
+           pch=16,
+           col=alpha(cols[as.character(ex$Alt.type)], 0.6),
+           cex=if(add.purity) rescale(as.numeric(ex[,5]), to=c(1,2)) else 1)
+  })
+  NULL
+}
