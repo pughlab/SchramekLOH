@@ -89,12 +89,20 @@ plotLohProb <- function(goi=NULL, soi=NULL, i=NULL, j=NULL, diff=FALSE,
   } else {
     print("Processing expression...")
     soi <- gsub("-", ".", soi)
+
+    gaf.spl <- split(gaf.ord, f=gaf.ord$chr)
+    cum.x <- sapply(gaf.spl, function(x) c(min(x$start), diff(x$start)))
+    cum.x <- cumsum(as.numeric(unlist(cum.x[paste0("chr", c(1:22, "X", "Y"))])))
+    length(cum.x) <- nrow(gaf.ord)
+    gaf.ord$cumx <- cum.x
+
     loh <- data.frame("prob"=apply(z.ex[,soi], 1, function(x) mean(as.numeric(x), na.rm=TRUE)),
-                      "idx"=c(1:nrow(z.ex)))
+                      "idx"=gaf.ord$cumx)
 
     rle.x <- rle(as.character(gaf.ord$chr))
     na.chr <- which(!is.na(rle.x$values))
-    chr.xpos <- c(1, cumsum(rle.x$length))
+    chg <- c(1, cumsum(rle.x$length))
+    chr.xpos <- na.omit(gaf.ord$cumx[chg])
   }
 
 
@@ -120,16 +128,16 @@ plotLohProb <- function(goi=NULL, soi=NULL, i=NULL, j=NULL, diff=FALSE,
   rect(ytop=max(chr.xpos) - chr.xpos[-length(chr.xpos)][c(TRUE,FALSE)],  xleft = -10,
        ybottom = max(chr.xpos) - chr.xpos[-1][c(TRUE,FALSE)], xright = 10,
        border=FALSE, col=alpha("grey", 0.2))
-  lines(smoothed10, rev(c(1:length(smoothed10))), col="blue")
+  lines(smoothed10, rev(gaf.ord$cumx), col="blue")
 
 
   # Label chromosomes
   #abline(v=chr.xpos, lty=2, col="grey")
   if(diff){
-    abline(v=0, lty=2, col="black")
+    abline(v=quantile(smoothed10, 0.05), lty=2, col="black")
   } else {
     if(!is.expr){
-      abline(v=quantile(loh$prob, 0.25, na.rm=TRUE), lty=2, col="black")
+      abline(v=quantile(loh$prob, 0.1, na.rm=TRUE), lty=2, col="black")
     } else {
       abline(v=0, lty=2, col="black")
     }
