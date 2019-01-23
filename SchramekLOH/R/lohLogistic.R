@@ -121,20 +121,20 @@ plotLohProb <- function(goi=NULL, soi=NULL, i=NULL, j=NULL, diff=FALSE,
     max.x <- max(loh$prob, na.rm=TRUE) + 0.03
   }
 
-  with(loh, plot(rev(prob), idx, pch=16, col=alpha("grey", 0.3),
+  with(loh, plot((prob), -1*idx, pch=16, col=alpha("grey", 0.3),
                  xlim=if(!is.null(minx)) minx else c(min.x, max.x), las=1,
                  main=main, yaxt='n', ylab='', xlab=xlab,
                  type=if(diff) 'n' else 'p'))
-  rect(ytop=max(chr.xpos) - chr.xpos[-length(chr.xpos)][c(TRUE,FALSE)],  xleft = -10,
-       ybottom = max(chr.xpos) - chr.xpos[-1][c(TRUE,FALSE)], xright = 10,
-       border=FALSE, col=alpha("grey", 0.2))
-  lines(smoothed10, rev(gaf.ord$cumx), col="blue")
+  rect(ytop=-1*chr.xpos[-length(chr.xpos)][c(TRUE,FALSE)],  xleft = -10,
+       ybottom = -1*chr.xpos[-1][c(TRUE,FALSE)], xright = 10,
+       border=FALSE, col=alpha("grey", 0.3))
+  lines(smoothed10, -1*(loh$idx), col="blue")
 
 
   # Label chromosomes
   #abline(v=chr.xpos, lty=2, col="grey")
   if(diff){
-    abline(v=quantile(smoothed10, 0.05), lty=2, col="black")
+    abline(v=quantile(smoothed10, 0.001), lty=2, col="black")
   } else {
     if(!is.expr){
       abline(v=quantile(loh$prob, 0.1, na.rm=TRUE), lty=2, col="black")
@@ -142,7 +142,7 @@ plotLohProb <- function(goi=NULL, soi=NULL, i=NULL, j=NULL, diff=FALSE,
       abline(v=0, lty=2, col="black")
     }
   }
-  text(y=(max(chr.xpos) - (chr.xpos[-length(chr.xpos)] + 10)),
+  text(y=(-1*(chr.xpos[-length(chr.xpos)] + 10)),
        x=rep(c(min.x, min.x+0.01), length(na.chr)),
        labels=gsub("^chr", "", rle.x$values[na.chr]),
        adj=0, cex=0.5)

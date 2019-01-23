@@ -4,7 +4,7 @@
 \alias{.mutBoxplot}
 \title{.mutBoxplot}
 \usage{
-.mutBoxplot(ex.by.mut, add.purity = TRUE)
+.mutBoxplot(ex.by.mut, add.purity = TRUE, jitter = 0.05)
 }
 \arguments{
 \item{add.purity}{}

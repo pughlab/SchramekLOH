@@ -4,8 +4,9 @@
 \alias{plotLohProb}
 \title{plotLohProb}
 \usage{
-plotLohProb(goi = NULL, i = NULL, j = NULL, diff = FALSE,
-  main = NULL, is.expr = FALSE, xlab = "Probability")
+plotLohProb(goi = NULL, soi = NULL, i = NULL, j = NULL,
+  diff = FALSE, main = NULL, is.expr = FALSE, xlab = "Probability",
+  minx = NULL)
 }
 \arguments{
 \item{goi}{Gene of interest (e.g. ADAM10)}

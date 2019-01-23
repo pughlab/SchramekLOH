@@ -5,10 +5,10 @@
 \title{parseIdsByMutation}
 \usage{
 parseIdsByMutation(gene, gene.ex, seg.ids = seg.ids, lo.q = 0.1,
-  hi.q = 0.9)
+  hi.q = 0.9, cbio = NULL, keep.only.abs = FALSE)
 }
 \arguments{
-\item{gene.ex}{}
+\item{hi.q}{}
 }
 \description{
 parseIdsByMutation

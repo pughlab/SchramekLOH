@@ -148,18 +148,29 @@ getSegIQR <- function(segdf, lo.q=0.25, hi.q=0.75){
 #'
 #' @param gene
 #' @param gene.ex
+#' @param seg.ids
+#' @param lo.q
+#' @param hi.q
 #'
 #' @return
 #' @export
 #'
 #' @examples
-parseIdsByMutation <- function(gene, gene.ex, seg.ids=seg.ids, lo.q=0.1, hi.q=0.9){
+parseIdsByMutation <- function(gene, gene.ex, seg.ids=seg.ids,
+                               lo.q=0.1, hi.q=0.9, cbio=NULL,
+                               keep.only.abs=FALSE){
   .getAltType <- function(x){
     alt.x <- rep("NA", length(x))
-    non.idx <- unique(sort(unlist(sapply(c("fs", "del", "\\*", "splice"), grep, x=x))))
+    hloss.idx <- unique(sort(unlist(sapply(c("HETLOSS"), grep, x=x))))
+    cnloss.idx <- unique(sort(unlist(sapply(c("CNLOSS"), grep, x=x))))
+    non.idx <- unique(sort(unlist(sapply(c("fs", "\\*", "splice"), grep, x=x))))
+    inframe.idx <- unique(sort(unlist(sapply(c("del"), grep, x=x))))
     mis.idx <- grep("^[A-Z][0-9]+[A-Z]$", x=x)
 
+    alt.x[hloss.idx] <- 'HETLOSS'
+    alt.x[cnloss.idx] <- 'CNLOSS'
     alt.x[non.idx] <- 'Nonsense'
+    alt.x[inframe.idx] <- 'Inframe'
     alt.x[mis.idx] <- 'Missense'
     alt.x
   }
@@ -170,6 +181,11 @@ parseIdsByMutation <- function(gene, gene.ex, seg.ids=seg.ids, lo.q=0.1, hi.q=0.
   ## Get the IQR for seg LRR as a pseudo-approximation for purity
   seg.iqr <- data.frame(t(sapply(seg.ids, getSegIQR, lo.q=lo.q, hi.q=hi.q)),
                         stringsAsFactors=FALSE)
+
+  if(!is.null(cbio)){
+    cnloss.s <- as.character(cbio[which(cbio$Gene == gene),]$Sample)
+    cna.samples[which(cna.samples$TRACK_ID %in% cnloss.s), 2] <- 'CNLOSS'
+  }
 
   ## Find Samples that are "no_alteration" across all mutation subtypes
   no_alt.samples <- lapply(gene.mut, function(m) mut.attr[which(mut.attr[,m] == 'no_alteration'), 'TRACK_ID'])
@@ -193,9 +209,24 @@ parseIdsByMutation <- function(gene, gene.ex, seg.ids=seg.ids, lo.q=0.1, hi.q=0.
 
   cna.samples <- mut.attr[which(mut.attr[, paste0(gene, "_CNA")] != 'no_alteration'),
                           c('TRACK_ID', paste0(gene, "_CNA"))]
+  if(!is.null(cbio)){
+    cnloss.s <- as.character(cbio[which(cbio$Gene == gene),]$Sample)
+    cna.samples[which(cna.samples$TRACK_ID %in% cnloss.s), 2] <- 'CNLOSS'
+  }
   cna.samples$Alt.type <- .getAltType(cna.samples[,2])
   cna.samples <- merge(cna.samples, gene.ex, by='TRACK_ID', all.x=TRUE)
   cna.samples <- merge(cna.samples, seg.iqr, by='TRACK_ID', all.x=TRUE)
+  if(keep.only.abs){
+    rm.idx <- which(cna.samples[,2] == 'HETLOSS')
+    rm.df <- data.frame("TRACK_ID"=cna.samples[rm.idx, 'TRACK_ID'],
+                        'Alt'=rep("no_alteration", length(rm.idx)),
+                        'Alt.type'=rep("NA", length(rm.idx)),
+                        'Gene'=cna.samples[rm.idx, 4],
+                        'IQR'=cna.samples[rm.idx,5])
+    colnames(rm.df) <- colnames(no_alt.samples)
+    no_alt.samples <- rbind(no_alt.samples, rm.df)
+    cna.samples <- cna.samples[-rm.idx,]
+  }
 
   fusion.samples <- mut.attr[which(mut.attr[, paste0(gene, "_FUSION")] != 'no_alteration'),
                              c('TRACK_ID', paste0(gene, "_FUSION"))]
@@ -220,10 +251,13 @@ parseIdsByMutation <- function(gene, gene.ex, seg.ids=seg.ids, lo.q=0.1, hi.q=0.
 #' @export
 #'
 #' @examples
-.mutBoxplot <- function(ex.by.mut, add.purity=TRUE){
+.mutBoxplot <- function(ex.by.mut, add.purity=TRUE, jitter=0.05){
   cols <- list("NA"='grey',
-               'Nonsense'='red',
-               'Missense'='blue')
+               'Nonsense'='#e7298a',
+               'Missense'='#33a02c',
+               'Inframe'='#fb9a99',
+               'HETLOSS'='purple', # #a6cee3
+               'CNLOSS'='#1f78b4')
 
   ex.id <- colnames(ex.by.mut[[1]])[4]
 
@@ -232,10 +266,14 @@ parseIdsByMutation <- function(gene, gene.ex, seg.ids=seg.ids, lo.q=0.1, hi.q=0.
 
   x <- sapply(seq_along(ex.by.mut), function(x){
     ex <- ex.by.mut[[x]]
-    points(x=rep(x, nrow(ex)), y=ex[, ex.id],
+    xjitter <- rep(x, nrow(ex)) + rnorm(n = nrow(ex), mean=0, sd=jitter)
+    points(x=xjitter, y=ex[, ex.id],
            pch=16,
            col=alpha(cols[as.character(ex$Alt.type)], 0.6),
            cex=if(add.purity) rescale(as.numeric(ex[,5]), to=c(1,2)) else 1)
   })
+  legend("topright",
+         legend = names(cols), bty = "n",
+         col = unlist(cols), pch = c(16))
   NULL
 }
