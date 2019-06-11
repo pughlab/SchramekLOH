@@ -17,16 +17,14 @@
   gr.seg.reduce <- cleanSeg(seg)
   gr.seg <- GRanges(seg)
 
-  overlaps <- findOverlaps(gr.i, gr.bin)
-  ov.idx <- subjectHits(overlaps)
+  ov.idx <- findOverlaps(gr.i, gr.bin, select='first')
+  ov.idx <- fixNA(ov.idx)
 
-  red.overlaps <- findOverlaps(gr.i, gr.seg.reduce)
-  red.overlaps <- filterOverlaps(red.overlaps)
-  red.ov.idx <- subjectHits(red.overlaps)
+  red.ov.idx <- findOverlaps(gr.i, gr.seg.reduce, select='first')
+  red.ov.idx <- fixNA(red.ov.idx)
 
-  seg.overlaps <- findOverlaps(gr.i, gr.seg)
-  seg.overlaps <- filterOverlaps(seg.overlaps)
-  seg.ov.idx <- subjectHits(seg.overlaps)
+  seg.ov.idx  <- findOverlaps(gr.i, gr.seg, select='first')
+  seg.ov.idx <- fixNA(seg.ov.idx)
 
   list("genes"=data.frame("gene"=i$gene,
                           "chr"=i$chr,
@@ -218,6 +216,7 @@ mapAndPlotFeatures <- function(id, mapping.cov, use.affy, plotsdir,
     if(!is.null(goi.tmp[[1]])){
       ## Visualize the Gene Of Interest is it is located in this region
       i <- goi.tmp[[1]]
+      i <- i[with(i, order(start, end)),]
       if(gen.plot){
         rect(xleft = i$end - (10000 * chr.bins), ybottom = 0,
              xright = i$end, ytop = 10,

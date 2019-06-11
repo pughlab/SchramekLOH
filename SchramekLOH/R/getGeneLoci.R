@@ -24,3 +24,19 @@ getGeneLoci <- function(gene){
              "start"=sapply(lookup, function(i) start(i)),
              "end"=sapply(lookup, function(i) end(i)))
 }
+
+#' getMapping
+#'
+#' @param in.col Column name for org.Hs.eg.db (e.g. ENTREZID)
+#' @param out.cols Column name(s) for org.Hs.eg.db (e.g. SYMBOL)
+#'
+#' @return
+#' @export
+#'
+#' @examples
+getMapping <- function(in.col='ENTREZID',
+                       out.cols=c("SYMBOL", "ENSEMBL")){
+  gene.map <- select(org.Hs.eg.db, keys=keys(org.Hs.eg.db, in.col),
+                     keytype="ENTREZID", columns=out.cols)
+  gene.map
+}
