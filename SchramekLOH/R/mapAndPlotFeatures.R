@@ -19,12 +19,15 @@
 
   ov.idx <- findOverlaps(gr.i, gr.bin, select='first')
   ov.idx <- fixNA(ov.idx)
+  if(any(is.na(ov.idx))) ov.idx <- ov.idx[-which(is.na(ov.idx))]
 
   red.ov.idx <- findOverlaps(gr.i, gr.seg.reduce, select='first')
   red.ov.idx <- fixNA(red.ov.idx)
+  if(any(is.na(red.ov.idx))) red.ov.idx <- red.ov.idx[-which(is.na(red.ov.idx))]
 
   seg.ov.idx  <- findOverlaps(gr.i, gr.seg, select='first')
   seg.ov.idx <- fixNA(seg.ov.idx)
+  if(any(is.na(seg.ov.idx))) seg.ov.idx <- seg.ov.idx[-which(is.na(seg.ov.idx))]
 
   list("genes"=data.frame("gene"=i$gene,
                           "chr"=i$chr,
@@ -145,6 +148,10 @@
 mapAndPlotFeatures <- function(id, mapping.cov, use.affy, plotsdir,
                                snp6.chr, seg.chr, bs.chr, z.chr,
                                r, p, cn, gen.plot=TRUE, use.absolute=FALSE){
+  print(paste0("> ", id, " (",
+               grep(id, colnames(bs.chr[[1]])),
+               "/", ncol(bs.chr[[1]])))
+
   ids <- SchramekLOH:::.mapId(id, mapping.cov, use.affy=use.affy)
 
   if(gen.plot){
