@@ -36,7 +36,7 @@ getGeneLoci <- function(gene){
 #' @examples
 getMapping <- function(in.col='ENTREZID',
                        out.cols=c("SYMBOL", "ENSEMBL")){
-  gene.map <- select(org.Hs.eg.db, keys=keys(org.Hs.eg.db, in.col),
+  gene.map <- AnnotationDbi::select(org.Hs.eg.db, keys=keys(org.Hs.eg.db, in.col),
                      keytype="ENTREZID", columns=out.cols)
   gene.map
 }
