@@ -29,8 +29,14 @@ mapFIandTruncatingMutations <- function(muts, verbose=T, FI,
   nookb.fi <- merge(muts, FI, 
                     by.x=c('Hugo_Symbol', 'HGVSp_Short'), 
                     by.y=c('gene', 'mut'), all.x=T)
-  nookb.fi[nookb.fi$HGVSp_Short == 'Deletion',]$p.lof <- TRUE
+  
+  for(del.ids in c("^Deletion$", "^Het. Deletion$", "^Hom. Deletion$")){
+    if(any(grepl(del.ids, nookb.fi$HGVSp_Short))){
+      nookb.fi[grep(del.ids, nookb.fi$HGVSp_Short),]$p.lof <- TRUE
+    }
+  }
   nookb.fi[is.na(nookb.fi$p.lof),]$p.lof <- FALSE
+  nookb.fi[is.na(nookb.fi$c.lof),]$c.lof <- 'unknown'
   nookb.fi
 }
 
@@ -93,10 +99,10 @@ annotateFI <- function(FI){
 #' @export
 #'
 #' @examples
-genFIdataframe <- function(gene.dat){
+genFIdataframe <- function(gene.dat, ...){
   ## Parse cBio data and assemble into FI matrices
   gene.fi <- lapply(gene.dat, SchramekLOH:::parseFunctionalImpact)
-  gene.fi.mats  <- lapply(gene.fi, SchramekLOH:::mkFIMatrix)
+  gene.fi.mats  <- lapply(gene.fi, function(gene, ...) SchramekLOH:::mkFIMatrix(gene, ...), ...)
   
   ## Assemble all FI matrices together into one large matrix
   FI.verbose <- as.data.frame(do.call(rbind, lapply(gene.fi.mats, function(i) i[[1]])))
@@ -145,7 +151,7 @@ parseFunctionalImpact <- function(g){
 }
 
 ## Assemble the Functional Impact scores for each gene into a matrix for each gene and mutation
-mkFIMatrix <- function(gene){
+mkFIMatrix <- function(gene, mk.uniq=TRUE){
   require(reshape2)
   if(length(gene) > 0){
     lapply(c('impact', 'score'), function(v){
@@ -161,7 +167,11 @@ mkFIMatrix <- function(gene){
         gene <- gene[-gene.idx[ma.idx[rm.idx]],]
       }
       
-      unmelt <- dcast(unique(gene), mut~tool, value.var=v)
+      if(mk.uniq) {
+        unmelt <- dcast(unique(gene), mut~tool, value.var=v)
+      } else {
+        unmelt <- dcast(gene, mut~tool, value.var=v)
+      }
       unmelt
     })
   }
