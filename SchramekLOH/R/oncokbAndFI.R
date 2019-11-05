@@ -170,7 +170,9 @@ mkFIMatrix <- function(gene, mk.uniq=TRUE){
       if(mk.uniq) {
         unmelt <- dcast(unique(gene), mut~tool, value.var=v)
       } else {
-        unmelt <- dcast(gene, mut~tool, value.var=v)
+        tmp <- ddply(gene, .(mut, tool), transform, newid = paste(mut, seq_along(tool)))
+        unmelt <- dcast(tmp, mut + newid ~ tool, value.var = v)
+        unmelt <- unmelt[,-which(colnames(unmelt) == "newid")]
       }
       unmelt
     })
