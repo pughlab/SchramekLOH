@@ -196,7 +196,7 @@ addCnvToFi <- function(g, gene.fi.spl, all.lt.genes) {
   colnames(cnv.mat) <- colnames(gene.fi.spl[[g]][[1]])
   
   rbind(gene.fi.spl[[g]][[1]], cnv.mat)
-})
+}
 
 ## Visualization of the FI matrices by first inistializing a blank plot, and then adding rectangles representing the different FI states
 ## Makes a blank plot to plot FI 
