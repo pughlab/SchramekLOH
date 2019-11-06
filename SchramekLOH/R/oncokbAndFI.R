@@ -117,10 +117,22 @@ genFIdataframe <- function(gene.dat, ...){
   list("FI"=gene.fi, "FI.mat"=gene.fi.mats, "FI.verbose"=FI.verbose, "FI.score"=FI.score)
 }
 
+## Fills 'undefined' for all errors
+.genTrunc <- function(){
+  undefined <- paste(c("MutationAssessor:", "SIFT:", "Polyphen-2:"), 
+                     "impact: truncating, score: -1")
+  paste(undefined, collapse=";")
+}
+
 ## Given a gene-specific table of mutational data extracted from cBioportal, parse the 'Functional Impact' column for each gene
 parseFunctionalImpact <- function(g){
+  non.missense.idx <- which(!g$'Mutation Type' %in% c('Missense_Mutation', 'Splice_Region', 'Splice_Site', 'Translation_Start_Site'))
+  if(length(non.missense.idx) > 0) g[non.missense.idx,]$'Functional Impact' <- .genTrunc()
+  
   idx <- which(g$'Functional Impact' == '')
   if(length(idx) > 0) g <- g[-idx,]
+  
+  #if(length(idx) > 0) g <- g[-idx,]
   
   if(nrow(g) > 0){
     na.idx <- is.na(g$`Functional Impact`)
@@ -187,29 +199,31 @@ mkFIMatrix <- function(gene, mk.uniq=TRUE){
 #' @export
 #'
 #' @examples
-addCnvToFi <- function(g, gene.fi.spl, all.lt.genes) {
+addCnvToFi <- function(g, gene.fi.spl, all.lt.genes,
+                       cnvs=c('Het. Deletion', 'Hom. Deletion', 'Amplification')) {
   i <- all.lt.genes[[g]]
-  cnv.ids <- rev(sort(i$HGVSp_Short[i$HGVSp_Short %in% c('Het. Deletion', 'Hom. Deletion', 'Amplification')]))
-  gene.fi.spl[[g]][[1]][,1] <- as.character(gene.fi.spl[[g]][[1]][,1])
+  cnv.ids <- rev(sort(i$HGVSp_Short[i$HGVSp_Short %in% cnvs]))
+  gene.fi.spl[[g]][,1] <- as.character(gene.fi.spl[[g]][,1])
   
   cnv.mat <- as.data.frame(matrix(rep(as.character(cnv.ids), 4), ncol=4))
-  colnames(cnv.mat) <- colnames(gene.fi.spl[[g]][[1]])
+  colnames(cnv.mat) <- colnames(gene.fi.spl[[g]][,2:5])
   
-  rbind(gene.fi.spl[[g]][[1]], cnv.mat)
+  rbind(gene.fi.spl[[g]][,-1], cnv.mat)
 }
 
 ## Visualization of the FI matrices by first inistializing a blank plot, and then adding rectangles representing the different FI states
 ## Makes a blank plot to plot FI 
-mkBlankPlot <- function(gene.fi.spl){
+mkBlankPlot <- function(gene.fi.spl, xmax=50, fic){
   par(mar=c(10, 10, 4.1, 2.1))
-  plot(0, type='n', xlim=c(1,50), ylim=c(0.5, (length(gene.fi.spl) + 0.5)), 
+  plot(0, type='n', xlim=c(1,xmax), ylim=c(0.5, (length(gene.fi.spl) + 0.5)), 
        yaxt='n', xaxt='n', ylab="", xlab="Mutations")
-  axis(side=2, at=c(1:length(gene.fi.spl)), labels=names(gene.fi.spl), line = 5, tick = FALSE, cex.axis=0.9)
+  axis(side=2, at=c(1:length(gene.fi.spl)), labels=names(gene.fi.spl), line = 5, 
+       tick = FALSE, cex.axis=0.9, las=1)
   fi.idx <- c(0.7, 1, 1.3)
   axis(side=2, line = 0, las=2, cex.axis=0.7,
        at=as.numeric(sapply((seq_along(gene.fi.spl)-1), function(f) f + fi.idx)), 
        labels=rep(colnames(gene.fi.spl[[1]][,2:4]), length(gene.fi.spl)))
-  legend("bottomright", fill=fic, legend=c("Low", "Medium", "High"), box.lwd = 0)
+  legend("bottomright", fill=fic, legend=names(fic), box.lwd = 0)
 }
 
 ## Visualization of the FI matrices by first inistializing a blank plot, and then adding rectangles representing the different FI states
