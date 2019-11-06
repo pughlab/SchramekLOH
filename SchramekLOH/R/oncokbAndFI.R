@@ -179,6 +179,25 @@ mkFIMatrix <- function(gene, mk.uniq=TRUE){
   }
 }
 
+#' addCnvToFi
+#'
+#' @param g 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+addCnvToFi <- function(g, gene.fi.spl, all.lt.genes) {
+  i <- all.lt.genes[[g]]
+  cnv.ids <- rev(sort(i$HGVSp_Short[i$HGVSp_Short %in% c('Het. Deletion', 'Hom. Deletion', 'Amplification')]))
+  gene.fi.spl[[g]][[1]][,1] <- as.character(gene.fi.spl[[g]][[1]][,1])
+  
+  cnv.mat <- as.data.frame(matrix(rep(as.character(cnv.ids), 4), ncol=4))
+  colnames(cnv.mat) <- colnames(gene.fi.spl[[g]][[1]])
+  
+  rbind(gene.fi.spl[[g]][[1]], cnv.mat)
+})
+
 ## Visualization of the FI matrices by first inistializing a blank plot, and then adding rectangles representing the different FI states
 ## Makes a blank plot to plot FI 
 mkBlankPlot <- function(gene.fi.spl){
@@ -189,7 +208,7 @@ mkBlankPlot <- function(gene.fi.spl){
   fi.idx <- c(0.7, 1, 1.3)
   axis(side=2, line = 0, las=2, cex.axis=0.7,
        at=as.numeric(sapply((seq_along(gene.fi.spl)-1), function(f) f + fi.idx)), 
-       labels=rep(colnames(gene.fi.spl[[1]][[1]][,2:4]), length(gene.fi.spl)))
+       labels=rep(colnames(gene.fi.spl[[1]][,2:4]), length(gene.fi.spl)))
   legend("bottomright", fill=fic, legend=c("Low", "Medium", "High"), box.lwd = 0)
 }
 
